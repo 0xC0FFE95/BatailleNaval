@@ -1,5 +1,6 @@
 from tkinter import *
 
+
 class Navire:
     """
     Représente un navire avec un nom, une taille,
@@ -31,9 +32,6 @@ class Navire:
         return len(self.positions_touchees) == self.taille
 
 
-# --------------------------------
-# Classe Joueur
-# --------------------------------
 class Joueur:
     """
     Représente un joueur (humain ou ordinateur).
@@ -55,39 +53,36 @@ class Joueur:
             self.navires.append(navire)
 
 
-# --------------------------------
-# Classe Plateau
-# --------------------------------
 class Plateau:
     """
     Gère le plateau de jeu (la grille).
-    Dans cette phase, on prépare juste le cadrillage via un Canvas,
-    sans afficher de fenêtre complète (phase 2).
+    Dans la phase 2, on utilise un Canvas pour afficher la grille
+    dans une interface Tkinter.
     """
-    def __init__(self, parent=None, rows=10, cols=10, cell_size=30):
-        # Le paramètre parent est prévu pour la phase 2
-        # (quand nous aurons une fenêtre Tk).
-        # Ici, nous le rendons optionnel pour la phase 1.
-        self.parent = parent
+    def __init__(self, parent, rows=10, cols=10, cell_size=30):
+        """
+        :param parent: le widget parent (un Canvas dans notre cas).
+        :param rows: nombre de lignes du plateau.
+        :param cols: nombre de colonnes du plateau.
+        :param cell_size: taille d'une cellule (en pixels).
+        """
+        self.parent = parent   # ATTENTION : ce parent est un Canvas (et non une fenêtre)
         self.rows = rows
         self.cols = cols
         self.cell_size = cell_size
 
-        # Préparation d'un Canvas (non utilisé en phase 1)
-        self.canvas = tk.Canvas(
-            self.parent,
+        # Création d'un Canvas (pour le quadrillage) qui sera placé DANS le parent-canvas
+        self.canvas = Canvas(
             width=self.cols * self.cell_size,
             height=self.rows * self.cell_size,
             bg="white"
         )
-
-        # Dessin du quadrillage
+        # draw_grid uniquement après la création
         self.draw_grid()
 
     def draw_grid(self):
         """
         Dessine les lignes de la grille (10 x 10 par défaut).
-        Dans cette phase 1, nous ne l'affichons pas encore à l'écran.
         """
         for i in range(self.rows + 1):
             self.canvas.create_line(
@@ -107,4 +102,99 @@ class Plateau:
             )
 
 
+def main():
+    root = Tk()
+    root.title("Bataille Navale - Phase 2 (Canvas)")
 
+    # Fonctions liées aux boutons
+    def nouvelle_partie():
+        print("[INFO] Nouvelle partie !")
+        # Ici, vous pourriez réinitialiser les plateaux, re-créer les navires, etc.
+
+    def quitter_jeu():
+        root.quit()
+
+    # --- Premier Canvas : pour le plateau Joueur ---
+    canvas_joueur = Canvas(root, width=350, height=400, bg="lightblue")
+    canvas_joueur.pack(side=LEFT, padx=10, pady=10)
+
+    # Ajout d'un texte (label) "Joueur" dans ce Canvas
+    canvas_joueur.create_text(
+        100, 20,   # Position X=100, Y=20
+        text="Joueur",
+        font=("Arial", 14, "bold"),
+        fill="black"
+    )
+
+    # Création du plateau Joueur (grille)
+    plateau_joueur = Plateau(canvas_joueur)
+    # On place le Canvas de la grille DANS le Canvas "canvas_joueur" via create_window
+    canvas_joueur.create_window(
+        30, 50,        # Coordonnées (x, y) dans le canvas_joueur
+        window=plateau_joueur.canvas,
+        anchor="nw"    # ancrage en haut à gauche
+    )
+
+    # --- Événement de clic sur le plateau du joueur ---
+    def on_click_joueur(event):
+        # Calculer la ligne et la colonne en fonction de la position du clic
+        row = event.y // plateau_joueur.cell_size
+        col = event.x // plateau_joueur.cell_size
+        print(f"[Joueur] Clic sur la cellule ({row}, {col})")
+
+    # On associe la fonction au clic gauche de la souris sur le Canvas de la grille
+    plateau_joueur.canvas.bind("<Button-1>", on_click_joueur)
+
+    # --- Deuxième Canvas : pour le plateau Ordinateur ---
+    canvas_ordinateur = Canvas(root, width=350, height=400, bg="lightgreen")
+    canvas_ordinateur.pack(side=LEFT, padx=10, pady=10)
+
+    # Ajout d'un texte (label) "Ordinateur" dans ce Canvas
+    canvas_ordinateur.create_text(
+        120, 20,
+        text="Ordinateur",
+        font=("Arial", 14, "bold"),
+        fill="black"
+    )
+
+    # Création du plateau Ordinateur (grille)
+    plateau_ordinateur = Plateau(canvas_ordinateur)
+    # Placement dans le canvas_ordinateur
+    canvas_ordinateur.create_window(
+        50, 50,
+        window=plateau_ordinateur.canvas,
+        anchor="nw"
+    )
+
+    # --- Troisième Canvas : pour les boutons globaux ---
+    canvas_boutons = Canvas(root, width=150, height=400, bg="lightgray")
+    canvas_boutons.pack(side=LEFT, padx=10, pady=10)
+
+    # On crée des boutons et on les place via create_window
+    btn_nouvelle_partie = Button(canvas_boutons, text="Nouvelle Partie", command=nouvelle_partie)
+    canvas_boutons.create_window(
+        75, 50,  # au centre (X=75) si la largeur du canvas_boutons est ~150
+        window=btn_nouvelle_partie,
+        anchor="center"
+    )
+
+    btn_quitter = Button(canvas_boutons, text="Quitter", command=quitter_jeu)
+    canvas_boutons.create_window(
+        75, 100,
+        window=btn_quitter,
+        anchor="center"
+    )
+
+    # --- Création des joueurs ---
+    joueur = Joueur("Humain")
+    joueur.initialiser_navires()
+
+    ordinateur = Joueur("Ordinateur")
+    ordinateur.initialiser_navires()
+
+    # Lancement de la boucle événementielle Tkinter
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
